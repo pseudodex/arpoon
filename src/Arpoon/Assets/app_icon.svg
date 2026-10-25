@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1C2127"/>
+      <stop offset="1" stop-color="#15191E"/>
+    </linearGradient>
+    <linearGradient id="markGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#3A5F80"/>
+      <stop offset="1" stop-color="#6693BA"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#bgGrad)"/>
+
+  <!-- One continuous harpoon silhouette: a wide shaft and a large barbed
+       head so the mark fills the badge instead of thinning to a sliver.
+       The handle ends inside the badge so it never touches the corner. -->
+  <g transform="translate(128,142) rotate(38) scale(0.95)">
+    <path fill="url(#markGrad)" stroke="#0A1016" stroke-width="3" stroke-linejoin="round" d="
+      M 0,-98
+      L 26,-42 L 52,-6 L 26,14 L 15,24
+      L 15,116
+      L 0,124
+      L -15,116
+      L -15,24 L -26,14 L -52,-6 L -26,-42
+      Z"/>
+    <!-- highlight along the lit edge -->
+    <path fill="none" stroke="#DCEAF2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" d="
+      M 0,-92 L 22,-42 L 45,-9"/>
+  </g>
+</svg>

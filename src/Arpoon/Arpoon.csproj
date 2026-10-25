@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe suppresses the console/terminal window on Windows; it is a no-op on Linux/macOS. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifiers>linux-x64;win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <ApplicationIcon>Assets/app_icon.ico</ApplicationIcon>
+    <!-- Explicit path so PublishSingleFile's apphost actually embeds our UAC-elevation
+         manifest instead of the SDK's default "asInvoker" one (Windows only; ignored
+         elsewhere). -->
+    <ApplicationManifest Condition="'$(OS)' == 'Windows_NT' Or $(RuntimeIdentifier.StartsWith('win'))">app.manifest</ApplicationManifest>
+    <AssemblyName>Arpoon</AssemblyName>
+    <Product>Arpoon</Product>
+    <Title>Arpoon</Title>
+    <Description>Cross-platform network bandwidth diagnostics, device discovery, and ARP traffic management.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpPcap" Version="6.3.0" />
+    <PackageReference Include="Avalonia" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.148.0" />
+    </ItemGroup>
+
+</Project>

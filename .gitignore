@@ -1,0 +1,99 @@
+## --- Build & .NET ---
+[Bb]in/
+[Oo]bj/
+.config/
+.fake/
+
+## --- Output / Publish ---
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.app
+*.iso
+*.testsettings
+dist/
+publish_*.sh
+*.dmg
+*.deb
+packaging/macos/.build/
+packaging/macos/.build-linux/
+install_log.txt
+installer/
+
+## --- IDEs & Editores ---
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio (Windows/Mac)
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+## --- Operating System Files ---
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## --- Arpoon Specific (Logs and Captures) ---
+*.pcap
+*.cap
+logs/
+temp/
+.env
+.analisis.md
+.analisis.pdf
+
+## --- Python Cache & Bytecode ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+## --- Agents, Skills, OpenSpec and Design Kit (Local Only) ---
+.agents/
+.agent/
+_agents/
+_agent/
+.claude/
+.gemini/
+.cursor/
+.windsurf/
+openspec/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+accessibility/
+components/
+content/
+design-systems/
+frameworks/
+scripts/
+taste/
+tokens/
+workflows/
+evals/
+templates/
+iconos/

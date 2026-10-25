@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Arpoon.LogsWindow"
+        Title="Arpoon — Logs"
+        Icon="/Assets/app_icon.ico"
+        Width="760" Height="560"
+        MinWidth="480" MinHeight="320"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackgroundBrush}"
+        FontFamily="{StaticResource PrimaryFontFamily}">
+
+    <Grid RowDefinitions="Auto, *" Margin="16">
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,10">
+            <TextBlock Grid.Column="0" Text="Logs" FontWeight="Bold" FontSize="16"
+                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Name="CountText" Text="{Binding CountText}" FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+            <CheckBox Grid.Column="2" Name="AutoScrollCheck" Content="Auto-scroll" IsChecked="{Binding AutoScroll, Mode=TwoWay}"
+                       FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Button Grid.Column="3" Name="ClearButton" Content="Clear" Classes="danger" Command="{Binding ClearCommand}"
+                    Padding="12,6" FontSize="12.5"/>
+        </Grid>
+
+        <!-- Log list -->
+        <Border Grid.Row="1" Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+            <ListBox Name="LogListBox" Background="Transparent" Padding="0"
+                     ItemsSource="{Binding Entries}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{Binding RowTintHex}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                                BorderThickness="0,0,0,1" Padding="10,5">
+                            <Grid ColumnDefinitions="Auto, Auto, *" VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0" Text="{Binding TimeDisplay}"
+                                           FontFamily="{StaticResource MonospaceFontFamily}"
+                                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Border Grid.Column="1" Background="{Binding LevelColorHex}" CornerRadius="3"
+                                        Padding="5,1" Margin="0,0,10,0" VerticalAlignment="Center" MinWidth="42">
+                                    <TextBlock Text="{Binding LevelText}" FontSize="9.5" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" Text="{Binding Message}"
+                                           FontFamily="{StaticResource MonospaceFontFamily}"
+                                           FontSize="11.5" Foreground="{StaticResource TextPrimaryBrush}"
+                                           TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+    </Grid>
+</Window>
