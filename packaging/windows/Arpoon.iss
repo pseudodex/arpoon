@@ -4,7 +4,7 @@
 
 #define MyAppName "Arpoon"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.0.1"
 #endif
 #define MyAppExeName "Arpoon.exe"
 #define MyPublishDir "..\..\src\Arpoon\bin\Release\net8.0\win-x64\publish"

@@ -17,7 +17,7 @@ GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; NC
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PROJECT="$REPO_ROOT/src/Arpoon/Arpoon.csproj"
-VERSION="${1:-1.0.0}"
+VERSION="${1:-1.0.1}"
 ARCH="amd64"
 PKG_NAME="arpoon"
 # Staged on a native filesystem (not /mnt/c under WSL, which can't hold real
