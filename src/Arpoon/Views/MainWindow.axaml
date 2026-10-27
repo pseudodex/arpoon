@@ -202,7 +202,7 @@
                                 Background="{StaticResource CardBackgroundElevatedBrush}"
                                 BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="{StaticResource IconLayers}" Width="15" Height="15"
+                                <PathIcon Data="{StaticResource IconLogs}" Width="15" Height="15"
                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                 <TextBlock Text="View Logs" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
