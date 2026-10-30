@@ -19,7 +19,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PROJECT="$REPO_ROOT/src/Arpoon/Arpoon.csproj"
 WORK_DIR="$SCRIPT_DIR/.build"
 APP_DIR="$WORK_DIR/Arpoon.app"
-VERSION="${1:-1.0.1}"
+VERSION="${1:-1.0.2}"
 
 echo -e "${CYAN}Arpoon .dmg builder${NC}"
 

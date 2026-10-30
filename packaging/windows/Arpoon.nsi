@@ -8,7 +8,7 @@
 ;  src/Arpoon/bin/Release/net8.0/win-x64/publish/Arpoon.exe yourself).
 
 !define APP_NAME "Arpoon"
-!define APP_VERSION "1.0.1"
+!define APP_VERSION "1.0.2"
 !define APP_EXE "Arpoon.exe"
 !define PUBLISH_DIR "..\..\src\Arpoon\bin\Release\net8.0\win-x64\publish"
 !define VENDOR_DIR "vendor"
