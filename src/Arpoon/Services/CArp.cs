@@ -90,6 +90,49 @@ namespace Arpoon
                 }
             }
 
+            // SharpPcap cannot parse the BSD sockaddr on macOS, so _device.Addresses
+            // yields no IPv4 there. Fall back to the OS network stack (which reports it
+            // correctly) matched to this pcap device by interface name.
+            if (LocalIp == null)
+            {
+                try
+                {
+                    var osIf = NetworkInterfaceOption.ResolveOsInterface(_device);
+                    if (osIf != null)
+                    {
+                        var ipProps = osIf.GetIPProperties();
+                        foreach (var uni in ipProps.UnicastAddresses)
+                        {
+                            if (uni.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                            {
+                                LocalIp = uni.Address.GetAddressBytes();
+                                if (uni.IPv4Mask != null)
+                                {
+                                    SubnetMask = uni.IPv4Mask.GetAddressBytes();
+                                }
+                                break;
+                            }
+                        }
+
+                        if (RouterIp == null)
+                        {
+                            foreach (var gw in ipProps.GatewayAddresses)
+                            {
+                                if (gw.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                                {
+                                    RouterIp = gw.Address.GetAddressBytes();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Write($"[WARN] OS-interface IPv4 fallback failed: {ex.Message}");
+                }
+            }
+
             // Fallback: assume /24 if mask not detected
             if (SubnetMask == null)
             {

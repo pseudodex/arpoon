@@ -33,22 +33,52 @@ if ! command -v dotnet &>/dev/null; then
 fi
 
 echo -e "${YELLOW}[1/5] Publishing self-contained osx-x64 build...${NC}"
-dotnet publish "$PROJECT" -c Release -r osx-x64 --self-contained true \
-    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-
-echo -e "${YELLOW}[2/5] Publishing self-contained osx-arm64 build...${NC}"
-dotnet publish "$PROJECT" -c Release -r osx-arm64 --self-contained true \
-    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-
-X64_BIN="$REPO_ROOT/src/Arpoon/bin/Release/net8.0/osx-x64/publish/Arpoon"
-ARM64_BIN="$REPO_ROOT/src/Arpoon/bin/Release/net8.0/osx-arm64/publish/Arpoon"
-
+# NOTE: deliberately NOT a single-file publish. The previous version used
+# -p:PublishSingleFile=true and then lipo'd the two resulting executables into a
+# universal binary -- but a .NET single-file app appends its payload (managed
+# assemblies AND native libraries like libSkiaSharp.dylib) *after* the Mach-O
+# image, and `lipo` only understands Mach-O, so it silently drops that payload.
+# The merged binary then crashed at startup with
+# "DllNotFoundException: Unable to load shared library 'libSkiaSharp'" and never
+# drew a window. A folder publish keeps every native .dylib as a real file, and
+# we build the universal binary by lipo'ing the individual Mach-O files below.
+X64_DIR="$WORK_DIR/publish-osx-x64"
+ARM64_DIR="$WORK_DIR/publish-osx-arm64"
 rm -rf "$WORK_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
-echo -e "${YELLOW}[3/5] Creating universal (x64 + arm64) binary with lipo...${NC}"
-lipo -create -output "$APP_DIR/Contents/MacOS/Arpoon" "$X64_BIN" "$ARM64_BIN"
+dotnet publish "$PROJECT" -c Release -r osx-x64 --self-contained true \
+    -p:PublishSingleFile=false -o "$X64_DIR"
+
+echo -e "${YELLOW}[2/5] Publishing self-contained osx-arm64 build...${NC}"
+dotnet publish "$PROJECT" -c Release -r osx-arm64 --self-contained true \
+    -p:PublishSingleFile=false -o "$ARM64_DIR"
+
+echo -e "${YELLOW}[3/5] Assembling universal payload (lipo per Mach-O file)...${NC}"
+# Use the arm64 publish as the template for the file set. Managed assemblies are
+# architecture-neutral MSIL (identical in both publishes), so they are copied as
+# is; every Mach-O file (the apphost and the native .dylibs) is merged with its
+# x64 counterpart into a universal file via lipo.
+cp -R "$ARM64_DIR"/. "$APP_DIR/Contents/MacOS/"
+while IFS= read -r arm_file; do
+    rel="${arm_file#"$ARM64_DIR"/}"
+    x64_file="$X64_DIR/$rel"
+    dest="$APP_DIR/Contents/MacOS/$rel"
+    # Only Mach-O files need merging, and only when an x64 counterpart exists.
+    file "$arm_file" | grep -q "Mach-O" || continue
+    [ -f "$x64_file" ] || continue
+    # SkiaSharp / HarfBuzzSharp / Avalonia native assets already ship as
+    # universal (x86_64+arm64) dylibs, identical in both publishes -- leave those
+    # as copied. Trying to lipo two already-universal files is a fatal error
+    # ("have the same architectures ... can't be in the same fat output file").
+    # Only the single-arch .NET runtime dylibs and the apphost need a real merge.
+    if lipo -archs "$arm_file" | grep -qw x86_64; then
+        continue
+    fi
+    lipo -create -output "$dest" "$arm_file" "$x64_file"
+done < <(find "$ARM64_DIR" -type f)
 chmod +x "$APP_DIR/Contents/MacOS/Arpoon"
+echo -e "${GREEN}[OK] Universal binary: $(lipo -info "$APP_DIR/Contents/MacOS/Arpoon" | sed 's/.*: //')${NC}"
 
 echo -e "${YELLOW}[4/5] Assembling Arpoon.app...${NC}"
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
@@ -70,12 +100,21 @@ PLIST
 
 # The real binary needs a native admin prompt (not a Terminal sudo session) to
 # get packet-capture privileges, so launch.sh is the bundle's actual entry point.
+#
+# NOTE: the privileged command launches Arpoon via `launchctl asuser <uid>`,
+# NOT by invoking the binary directly. `do shell script ... with administrator
+# privileges` runs as root but in a session detached from the window server, so
+# a GUI app started directly there never shows a window (the admin dialog
+# appears, you authorize, then nothing happens). `launchctl asuser <console-uid>
+# <binary>` keeps the process running as root while attaching it to that user's
+# Aqua GUI session, so the Avalonia window actually appears.
 cat > "$APP_DIR/Contents/MacOS/launch.sh" <<'SCRIPT'
 #!/bin/bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$DIR/Arpoon"
+UID_NUM="$(id -u)"
 CURRENT_FWD=$(sysctl -n net.inet.ip.forwarding)
-osascript -e "do shell script \"sysctl -w net.inet.ip.forwarding=1 >/dev/null 2>&1; '$BIN'; sysctl -w net.inet.ip.forwarding=$CURRENT_FWD >/dev/null 2>&1\" with administrator privileges"
+osascript -e "do shell script \"sysctl -w net.inet.ip.forwarding=1 >/dev/null 2>&1; launchctl asuser $UID_NUM '$BIN'; sysctl -w net.inet.ip.forwarding=$CURRENT_FWD >/dev/null 2>&1\" with administrator privileges"
 SCRIPT
 chmod +x "$APP_DIR/Contents/MacOS/launch.sh"
 

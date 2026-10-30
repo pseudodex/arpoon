@@ -336,11 +336,13 @@ namespace Arpoon
             try
             {
                 var devices = SharpPcap.CaptureDeviceList.Instance;
-                var validDevices = devices.OfType<LibPcapLiveDevice>().Where(d => d.Addresses.Any(a =>
-                    a.Addr.ipAddress != null &&
-                    a.Addr.ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)).ToList();
+                // Pass every live device to BuildOptions and let it decide which are
+                // usable (interface has an IPv4 address) by correlating with the OS
+                // network stack. Pre-filtering on d.Addresses here would drop every
+                // interface on macOS, where SharpPcap reports no parsed addresses.
+                var liveDevices = devices.OfType<LibPcapLiveDevice>().ToList();
 
-                var options = NetworkInterfaceOption.BuildOptions(validDevices);
+                var options = NetworkInterfaceOption.BuildOptions(liveDevices);
                 NetworkInterfaceOptions = new ObservableCollection<NetworkInterfaceOption>(options);
 
                 if (options.Any())

@@ -109,12 +109,18 @@ build_arch() {
 </plist>
 PLIST
 
+    # See build_dmg.sh for why this launches via `launchctl asuser <uid>` rather
+    # than invoking the binary directly: a GUI app started by `do shell script
+    # ... with administrator privileges` runs root but off the window server and
+    # never shows a window. asuser re-attaches the root process to the user's
+    # Aqua GUI session.
     cat > "$app/Contents/MacOS/launch.sh" <<'SCRIPT'
 #!/bin/bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$DIR/Arpoon"
+UID_NUM="$(id -u)"
 CURRENT_FWD=$(sysctl -n net.inet.ip.forwarding)
-osascript -e "do shell script \"sysctl -w net.inet.ip.forwarding=1 >/dev/null 2>&1; '$BIN'; sysctl -w net.inet.ip.forwarding=$CURRENT_FWD >/dev/null 2>&1\" with administrator privileges"
+osascript -e "do shell script \"sysctl -w net.inet.ip.forwarding=1 >/dev/null 2>&1; launchctl asuser $UID_NUM '$BIN'; sysctl -w net.inet.ip.forwarding=$CURRENT_FWD >/dev/null 2>&1\" with administrator privileges"
 SCRIPT
     chmod +x "$app/Contents/MacOS/launch.sh"
 

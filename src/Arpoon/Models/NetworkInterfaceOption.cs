@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using SharpPcap.LibPcap;
 
 namespace Arpoon
@@ -58,6 +59,16 @@ namespace Arpoon
             foreach (var device in devices)
             {
                 var match = FindMatchingOsInterface(device, osInterfaces);
+
+                // Only offer interfaces that actually have an IPv4 address to work
+                // with. On macOS SharpPcap never reports one (see
+                // FindMatchingOsInterface), so this relies on the OS-matched
+                // interface; on Windows/Linux either source is accepted.
+                if (!((match != null && InterfaceHasIPv4(match)) || DeviceHasIPv4(device)))
+                {
+                    continue;
+                }
+
                 string name;
                 NetworkInterfaceKind kind;
 
@@ -86,6 +97,47 @@ namespace Arpoon
             return options;
         }
 
+        /// <summary>
+        /// Resolves the OS network interface backing a pcap device (by name/id, then
+        /// IPv4). Exposed so the ARP engine can obtain the local IPv4/netmask from the
+        /// OS stack on platforms (macOS) where SharpPcap fails to parse them.
+        /// </summary>
+        public static NetworkInterface ResolveOsInterface(LibPcapLiveDevice device)
+        {
+            if (device == null)
+            {
+                return null;
+            }
+
+            return FindMatchingOsInterface(device, SafeGetOsInterfaces());
+        }
+
+        private static bool InterfaceHasIPv4(NetworkInterface ni)
+        {
+            try
+            {
+                return ni.GetIPProperties().UnicastAddresses
+                    .Any(u => u.Address.AddressFamily == AddressFamily.InterNetwork);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool DeviceHasIPv4(LibPcapLiveDevice device)
+        {
+            try
+            {
+                return device.Addresses.Any(a => a?.Addr?.ipAddress != null &&
+                    a.Addr.ipAddress.AddressFamily == AddressFamily.InterNetwork);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static List<NetworkInterface> SafeGetOsInterfaces()
         {
             try
@@ -107,6 +159,26 @@ namespace Arpoon
                 return null;
             }
 
+            // Primary match: by interface identifier. On Linux/macOS the pcap device
+            // name IS the BSD ifname (e.g. "en0", "eth0"), identical to
+            // NetworkInterface.Name. On Windows the pcap name embeds the adapter GUID
+            // (e.g. "\Device\NPF_{GUID}"), which equals NetworkInterface.Id. This is the
+            // only reliable path on macOS, where SharpPcap cannot parse the BSD sockaddr
+            // and every device.Addresses[].Addr.ipAddress comes back null.
+            if (!string.IsNullOrEmpty(device.Name))
+            {
+                foreach (var ni in osInterfaces)
+                {
+                    if (string.Equals(device.Name, ni.Name, StringComparison.OrdinalIgnoreCase) ||
+                        (!string.IsNullOrEmpty(ni.Id) &&
+                         device.Name.IndexOf(ni.Id, StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        return ni;
+                    }
+                }
+            }
+
+            // Secondary match: by IPv4 address (works where SharpPcap parses addresses).
             var deviceIPs = new HashSet<IPAddress>();
             try
             {
